@@ -1,27 +1,10 @@
-from os import isatty, environ
-from xtermcolor.ColorMap import (
-    TrueColorMap,
-    XTermColorMap,
-    VT100ColorMap,
-    NoneColorizer,
-)
+from os import isatty, environ, write
+
+from xtermcolor.ColorMap import XTermColorMap, VT100ColorMap, NoneColorizer
 
 outputs = {}
 
-
-type RgbTriplet = list[int, int, int]
-type AnsiColor = int
-type RgbColor = int
-
-
-def colorize(
-        string: str,
-        rgb: RgbColor = None,
-        ansi: AnsiColor = None,
-        bg: RgbColor = None,
-        ansi_bg: AnsiColor = None,
-        fd: int = 1,
-        ) -> str:
+def colorize(string, rgb=None, ansi=None, bg=None, ansi_bg=None, fd=1):
     '''Returns the colored string to print on the terminal.
 
     This function detects the terminal type and if it is supported and the
@@ -39,22 +22,17 @@ def colorize(
     '''
 
     if outputs.get(fd) is None:
-        # Let's be good stewards of the ecosystem
-        # https://no-color.org/
         outputs[fd] = NoneColorizer()
-        if environ.get("NO_COLOR", None) in [None, ""] and isatty(fd):
-            # Try to autodetect support
-            if TrueColorMap.check_support(fd):
-                outputs[fd] = TrueColorMap()
-
-            # Legacy checks based on TERM
+        #Checks if it is on a terminal, and if the terminal is recognized
+        if isatty(fd) and 'TERM' in environ:
             match environ['TERM']:
                 case _ if environ['TERM'].startswith('xterm'):
+                    print("In the first match")
                     outputs[fd] = XTermColorMap()
                 case 'vt100':
                     outputs[fd] = VT100ColorMap()
+                case 'foot':
+                    outputs[fd] = XTermColorMap()
 
     return outputs[fd].colorize(string, rgb, ansi, bg, ansi_bg)
 
-
-__ALL__ = [colorize]
