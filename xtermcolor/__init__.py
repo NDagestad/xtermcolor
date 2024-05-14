@@ -1,7 +1,8 @@
 from os import isatty, environ, write
 
-from xtermcolor.ColorMap import XTermColorMap, VT100ColorMap
+from xtermcolor.ColorMap import XTermColorMap, VT100ColorMap, NoneColorizer
 
+outputs = {}
 
 def colorize(string, rgb=None, ansi=None, bg=None, ansi_bg=None, fd=1):
     '''Returns the colored string to print on the terminal.
@@ -20,28 +21,18 @@ def colorize(string, rgb=None, ansi=None, bg=None, ansi_bg=None, fd=1):
              stdout
     '''
 
-    #Reinitializes if fd used is different
-    if colorize.fd != fd:
-        colorize.init = False
-        colorize.fd = fd
+    if outputs.get(fd) is None:
+        outputs[fd] = NoneColorizer()
+        #Checks if it is on a terminal, and if the terminal is recognized
+        if isatty(fd) and 'TERM' in environ:
+            match environ['TERM']:
+                case _ if environ['TERM'].startswith('xterm'):
+                    print("In the first match")
+                    outputs[fd] = XTermColorMap()
+                case 'vt100':
+                    outputs[fd] = VT100ColorMap()
+                case 'foot':
+                    outputs[fd] = XTermColorMap()
 
-    #Checks if it is on a terminal, and if the terminal is recognized
-    if not colorize.init:
-        colorize.init = True
-        colorize.is_term = isatty(fd)
-        if 'TERM' in environ:
-            if environ['TERM'].startswith('xterm'):
-                colorize.cmap = XTermColorMap()
-            elif environ['TERM'] == 'vt100':
-                colorize.cmap = VT100ColorMap()
-            else:
-                colorize.is_term = False
-        else:
-            colorize.is_term = False
+    return outputs[fd].colorize(string, rgb, ansi, bg, ansi_bg)
 
-    if colorize.is_term:
-        string = colorize.cmap.colorize(string, rgb, ansi, bg, ansi_bg)
-
-    return string
-colorize.init = False
-colorize.fd = 1

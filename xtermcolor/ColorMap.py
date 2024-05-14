@@ -11,7 +11,6 @@ def _diff(color1, color2):
     (r2, g2, b2) = _rgb(color2)
     return abs(r1 - r2) + abs(g1 - g2) + abs(b1 - b2)
 
-
 class TerminalColorMap:
 
     def getColors(self, order='rgb'):
@@ -53,6 +52,9 @@ class TerminalColorMap:
 
         return "\033[38;5;{ansiCode:d}m\033[48;5;{bf:d}m{string:s}\033[0m".format(ansiCode=closestAnsi, bf=closestBgAnsi, string=string)
 
+class NoneColorizer(TerminalColorMap): 
+    def colorize(self, string, rgb, ansi, bg, ansi_bg):
+        return string
 
 class VT100ColorMap(TerminalColorMap):
     primary = [
