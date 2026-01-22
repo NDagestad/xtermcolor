@@ -1,0 +1,40 @@
+[project]
+name = "xtermcolor"
+authors = [
+  { name="Nicolai Dagestad", email="nicolai@dagestad.fr" },
+]
+description = "Python library for terminal color support (including 256-color support)"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+	'Intended Audience :: Developers',
+	'Natural Language :: English',
+	'Programming Language :: Python :: 3.10',
+	'Topic :: Software Development :: Libraries :: Python Modules',
+	'Topic :: Terminals :: Terminal Emulators/X Terminals',
+	'Topic :: Utilities'
+]
+license = "MIT"
+license-files = [
+    "LICENSE",
+]
+
+dynamic = ["version"]
+
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+version_file = "src/xtermcolor/_version.py"
+
+[options]
+include_package_data = true
+
+
+[project.scripts]
+xtermcolor = "xtermcolor.cli:Cli"
+
+[project.urls]
+"Homepage" = "https://github.com/ndagestad/xtermcolor"
+"Bug Tracker" = "https://github.com/ndagestad/xtermcolor/issues"

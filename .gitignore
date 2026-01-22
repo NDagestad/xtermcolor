@@ -1,3 +1,5 @@
 *~
 *.pyc
 debian
+src/xtermcolor/_version.py
+**/__pycache__/*

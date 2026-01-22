@@ -8,6 +8,7 @@ from xtermcolor.ColorMap import (
     NoneColorizer,
     _rgb,
 )
+from xtermcolor._version import version
 
 type RgbTriplet = list[int, int, int]
 type AnsiColor = int
@@ -37,6 +38,8 @@ def Cli():
                         choices=['xterm', 'vt100'],
                         default='xterm',
                         help='Compatibility mode.  Defaults to xterm.')
+
+    parser.add_argument("--version", action="version", version=f"%(prog)s {version}")
 
     cli = parser.parse_args()
 
@@ -84,7 +87,3 @@ def Cli():
                     start=cli.color, closest=rgb, ansi=ansi))
             print("Example: " + colorizedMsg)
             print("printf() string: " + cPrintfString(ansi))
-
-
-if __name__ == '__main__':
-    Cli()
