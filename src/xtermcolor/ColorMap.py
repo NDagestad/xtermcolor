@@ -146,28 +146,36 @@ class XTermColorMap(VT100ColorMap):
 
 class TrueColorMap(XTermColorMap):
     '''25-bit color terminal'''
+    supported_terms = ["alacritty", "xterm", "xterm-256color"]
 
+    # Can I use this ?
     # \E[>c │ DA2 │ VT220 │ Send secondary device attributes. Foot responds with "I'm a VT220 and here's my version number".  # ]
     @classmethod
     def check_support(cls, fd: int) -> bool:
-        # Check support in termcap and terminfo introduced in SVr3.2 (1987)
+        # Check support using XTGETCAP
         color_support = term_esc_exec("colors")
-        if len(color_support) == 0:
-            return False
-        if color_support[0] is not None and int(color_support[0]) >= 256:
+        if (
+            len(color_support) > 0 and
+            color_support[0] is not None and
+            int(color_support[0]) >= 256
+        ):
             return True
 
         # Try to first get the TERM through XTGETTCAP
-        term = term_esc_exec("TN")[0]
-        if term is None:
-            term = os.environ.ger("TERM", None)
+        term = term_esc_exec("TN")
+        if term == []:
+            term = os.environ.get("TERM", None)
+        else:
+            term = term[0]
 
         # check terminfo for support
+        # TODO
+
         # check if TERM is in a hard-coded list of known supported terminals
-        if term in ["xterm", "xterm-256color"]:
+        if term in TrueColorMap.supported_terms:
             return True
         # Last ditch effort, check $COLORTERM variable
-        if os.environ("COLORTERM", None) not in [None, ""]:
+        if os.environ.get("COLORTERM", None) not in [None, ""]:
             return True
         return False
 
@@ -192,9 +200,10 @@ class TrueColorMap(XTermColorMap):
         if rgb is not None:
             (_, closestRgb) = self.convert(rgb)
             fg_r, fg_g, fg_b = _rgb(closestRgb)
-            # Apparently the IS should have a first argument that is the colorspace
-            # But since I don't know what that is, I will omit it for now given that
-            # this is often the case and widely supported
+            # Apparently the IS should have a first argument that is the
+            # colorspace. But since I don't know what that is, I will
+            # omit it for now given that this is often the case and 
+            # widely supported.
             # XXX Maybe I should use the ; separated form instead?
             fg_ansi_code = f"\x1b\x5b38:2:{fg_r}:{fg_g}:{fg_b}m"
         elif ansi is not None:

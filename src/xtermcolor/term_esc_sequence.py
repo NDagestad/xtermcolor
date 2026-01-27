@@ -7,8 +7,6 @@ import tty
 
 
 def do_term_request(capability: (str | bytes | list), timeout: int = 0.1) -> list[str]:
-    DCS = '\x1bP+q{}\x1b\\'
-
     # Handle str, bytes and lists of them
     if type(capability) in [str, bytes]:
         capability = [capability]
@@ -28,7 +26,8 @@ def do_term_request(capability: (str | bytes | list), timeout: int = 0.1) -> lis
     fd = open(tty_fd, 'wb', 0)
     try:
         os.set_blocking(tty_fd, False)
-        cmd = DCS.format(capability).encode()
+        # XTGETCAP escape sequence
+        cmd = '\x1bP+q{}\x1b\\'.format(capability).encode()
         # Switch to raw mode
         tty.setraw(stdin_fd)
         # Write the code
@@ -38,7 +37,7 @@ def do_term_request(capability: (str | bytes | list), timeout: int = 0.1) -> lis
             r, _, _ = select.select([stdin_fd], [], [], timeout)
             if r:
                 d = os.read(stdin_fd, 1024)
-                data+=d
+                data += d
             else:
                 break
     except Exception as e:
@@ -48,12 +47,31 @@ def do_term_request(capability: (str | bytes | list), timeout: int = 0.1) -> lis
         fd.close()
 
     # split the data into individual responses
-    parts = data.split(b"\x1b\\")
-    # The last part should be empty because the string should end with b"\x1b\\"
-    if parts[-1] != b"":
-        return None
+    # Some terminals return multiple response ;-separated, and others in
+    # individual "\x1bP1+r...\x1b\\" blocs
+    parts = []
+    if b";" in data:
+        parts = data.split(b";")
+        # Last part need the "\x1b\\" removed so we can just add to
+    else:
+        parts = data.split(b"\x1b\\")
+        # The last part should be empty because the string should end
+        # with b"\x1b\\"
+        if parts[-1] != b"":
+            return None
 
-    return [x+b"\x1b\\" for x in parts[:-1]]
+    # Normalizing the responses to be the same as individual requests
+    parts_cleaned = []
+    for p in parts:
+        if p != b'':
+            parts_cleaned.append(
+                b"\x1bP1+r" +
+                p.removeprefix(b"\x1bP1+r").
+                removesuffix(b"\x1b\\") +
+                b"\x1b\\"
+            )
+
+    return parts_cleaned
 
 
 def parse_term_response(resp: bytes) -> (tuple[str, str] | None):
@@ -88,19 +106,19 @@ def execute(*commands: (bytes | str | list), **kwargs) -> bytes:
 
 
 if __name__ == "__main__":
-    resp = do_term_request(b"TN")[0]
-    if resp is not None:
-        print(parse_term_response(resp))
+    resp = do_term_request(b"TN")
+    if resp not in [None, []]:
+        print(parse_term_response(resp[0]))
     else:
         print("Failed to execute 'TN'")
 
-    resp = do_term_request(b"colors")[0]
-    if resp is not None:
-        print(parse_term_response(resp))
+    resp = do_term_request(b"colors")
+    if resp not in [None, []]:
+        print(parse_term_response(resp[0]))
     else:
         print("Failed to execute 'colors'")
 
-    responses = execute(b"colors", "TN")
-    print(responses)
+    responses = execute("colors", b"TN")
+    print(f"colors + TN: {responses}")
     responses = execute("TN", b"colors")
-    print(responses)
+    print(f"TN + colors: {responses}")
