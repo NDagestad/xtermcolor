@@ -146,14 +146,17 @@ class XTermColorMap(VT100ColorMap):
 
 class TrueColorMap(XTermColorMap):
     '''25-bit color terminal'''
-    supported_terms = ["alacritty", "xterm", "xterm-256color"]
+    # List of supported terminals that we can't detect by other means
+    supported_terms = ["alacritty", "xterm", "xterm-256color", "tmux-256color"]
+
+    # Explicitly not supported terminals
+    unsupported_terms = ["rxvt-unicode-256color", "screen"]
 
     # Can I use this ?
     # \E[>c │ DA2 │ VT220 │ Send secondary device attributes. Foot responds with "I'm a VT220 and here's my version number".  # ]
     @classmethod
     def check_support(cls, fd: int) -> bool:
-        # screen is weird so I make an exception to exit early...
-        if os.environ.get("TERM", None) == "screen":
+        if os.environ.get("TERM", None) in TrueColorMap.unsupported_terms:
             return False
 
         # Check support using XTGETCAP
