@@ -18,9 +18,9 @@ type RgbColor = int
 def cPrintfString(color: AnsiColor | RgbColor, rgb: bool = False) -> str:
     if rgb:
         r, g, b = _rgb(color)
-        return f"\\x1b\x5b38:2:{r}:{g}:{b}m"
+        return f"\\x1b\x5b38:2:{r}:{g}:{b}m<TEXT>\\x1b\x5b0m"
     else:
-        return f'"\\x1b\x5b38;5;{color}m%s\\x1b\x5b0m"'
+        return f"\\x1b\x5b38;5;{color}m<TEXT>\\x1b\x5b0m"
 
 
 def Cli():

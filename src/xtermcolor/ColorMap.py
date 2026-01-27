@@ -151,8 +151,10 @@ class TrueColorMap(XTermColorMap):
     @classmethod
     def check_support(cls, fd: int) -> bool:
         # Check support in termcap and terminfo introduced in SVr3.2 (1987)
-        color_support = term_esc_exec("colors")[0]
-        if color_support is not None and int(color_support) >= 256:
+        color_support = term_esc_exec("colors")
+        if len(color_support) == 0:
+            return False
+        if color_support[0] is not None and int(color_support) >= 256:
             return True
 
         # Try to first get the TERM through XTGETTCAP
