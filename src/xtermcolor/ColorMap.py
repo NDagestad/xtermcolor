@@ -152,6 +152,10 @@ class TrueColorMap(XTermColorMap):
     # \E[>c │ DA2 │ VT220 │ Send secondary device attributes. Foot responds with "I'm a VT220 and here's my version number".  # ]
     @classmethod
     def check_support(cls, fd: int) -> bool:
+        # screen is weird so I make an exception to exit early...
+        if os.environ.get("TERM", None) == "screen":
+            return False
+
         # Check support using XTGETCAP
         color_support = term_esc_exec("colors")
         if (
