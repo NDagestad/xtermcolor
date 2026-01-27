@@ -154,7 +154,7 @@ class TrueColorMap(XTermColorMap):
         color_support = term_esc_exec("colors")
         if len(color_support) == 0:
             return False
-        if color_support[0] is not None and int(color_support) >= 256:
+        if color_support[0] is not None and int(color_support[0]) >= 256:
             return True
 
         # Try to first get the TERM through XTGETTCAP
@@ -164,7 +164,11 @@ class TrueColorMap(XTermColorMap):
 
         # check terminfo for support
         # check if TERM is in a hard-coded list of known supported terminals
+        if term in ["xterm", "xterm-256color"]:
+            return True
         # Last ditch effort, check $COLORTERM variable
+        if os.environ("COLORTERM", None) not in [None, ""]:
+            return True
         return False
 
     def colorize(self, string, rgb=None, ansi=None, bg=None, ansi_bg=None):
